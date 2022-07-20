@@ -1,9 +1,10 @@
 import scrapy
 import json
 from urllib.parse import urlencode, unquote
+import os
 
 
-API_KEY = "c88c857a7aa4b2ad0463789c8f4a90f9"
+API_KEY = os.environ.get("API_KEY")
 
 
 def get_scraperapi_url(url):
