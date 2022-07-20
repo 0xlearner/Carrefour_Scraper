@@ -4,9 +4,10 @@ import uuid
 import json
 from urllib.parse import urlencode, unquote
 import pandas as pd
+import os
 
 
-API_KEY = "645c5d2f619d86d1ae99916c05d6d58b"
+API_KEY = os.environ.get("API_KEY")
 
 
 def get_scraperapi_url(url):
@@ -23,8 +24,8 @@ class CarrefourKSA(scrapy.Spider):
 
     custom_settings = {
         "FEED_FORMAT": "csv",
-        "FEED_URI": "carrefour-ksa.csv",
-        "LOG_FILE": "carrefour-ksa.log",
+        "FEED_URI": "carrefour-ksa-1.csv",
+        "LOG_FILE": "carrefour-ksa-1.log",
         # "IMAGES_STORE": catalouge_id,
     }
 
@@ -54,7 +55,9 @@ class CarrefourKSA(scrapy.Spider):
         for lang in languages:
             for category in categories:
                 yield scrapy.Request(
-                    url=f"https://www.carrefourksa.com/mafsau/{lang}/c/{category}?currentPage=0&filter=&nextPageOffset=0&pageSize=60&sortBy=relevance",
+                    url=get_scraperapi_url(
+                        f"https://www.carrefourksa.com/mafsau/{lang}/c/{category}?currentPage=0&filter=&nextPageOffset=0&pageSize=60&sortBy=relevance"
+                    ),
                     headers=self.headers,
                     callback=self.parse_links,
                 )

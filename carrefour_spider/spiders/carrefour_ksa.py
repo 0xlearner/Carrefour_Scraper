@@ -33,45 +33,25 @@ class CarrefourKSA(scrapy.Spider):
 
     headers = {
         "authority": "www.carrefourksa.com",
-        "accept": "*/*",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "accept-language": "en,ru;q=0.9",
-        "appid": "Reactweb",
-        "credentials": "include",
-        "deviceid": "1042241961.1656074849",
-        "env": "prod",
-        "if-modified-since": "Fri, 01 Jul 2022 22:01:21 GMT",
-        "if-none-match": 'W/"23af1-32ToVtn5m6ahtiiBp6hXfviKyZI"',
-        "newrelic": "eyJ2IjpbMCwxXSwiZCI6eyJ0eSI6IkJyb3dzZXIiLCJhYyI6IjMzNTU3MjAiLCJhcCI6IjEwMjE4NDU3MDUiLCJpZCI6ImVkZjBmYzY1ZjcyMmIwMGIiLCJ0ciI6ImE2ZWViOGIxMDZmYjg5NDFmMWVmNTk4YWFiMmYxNDVmIiwidGkiOjE2NTY3MTMzODg4ODV9fQ==",
         "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="100", "Yandex";v="22"',
         "sec-ch-ua-mobile": "?0",
         "sec-ch-ua-platform": '"Linux"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-origin",
-        "storeid": "mafsau",
-        "token": "undefined",
-        "traceparent": "00-a6eeb8b106fb8941f1ef598aab2f145f-edf0fc65f722b00b-01",
-        "tracestate": "3355720@nr=0-1-3355720-1021845705-edf0fc65f722b00b----1656713388885",
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "none",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": "1",
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.143 YaBrowser/22.5.0.1879 (beta) Yowser/2.5 Safari/537.36",
-        "userid": "undefined",
     }
 
     params = {
-        "filter": "",
-        "sortBy": "relevance",
         "currentPage": "0",
+        "filter": "",
+        "nextPageOffset": "0",
         "pageSize": "60",
-        "maxPrice": "",
-        "minPrice": "",
-        "areaCode": "Granada - Riyadh",
-        "lang": "en",
-        "displayCurr": "SAR",
-        "latitude": "24.7136",
-        "longitude": "46.6753",
-        "nextOffset": "0",
-        "requireSponsProducts": "true",
-        "responseWithCatTree": "true",
-        "depth": "3",
+        "sortBy": "relevance",
     }
 
     def start_requests(self):
@@ -92,41 +72,38 @@ class CarrefourKSA(scrapy.Spider):
         for lang in languages:
             self.params["lang"] = lang
             for category in categories:
-                base_url = (
-                    f"https://www.carrefourksa.com/api/v7/categories/{category}?"
-                    + urlencode(self.params)
-                )
+                base_url = f"https://www.carrefourksa.com/mafsau/{lang}/c/{category}?currentPage=0&filter=&nextPageOffset=0&pageSize=60&sortBy=relevance"
                 yield scrapy.Request(
-                    url=base_url,
+                    url=get_scraperapi_url(base_url),
                     headers=self.headers,
                     callback=self.parse_links,
-                    meta={"category": category},
                 )
 
     def parse_links(self, response):
+        data = (
+            response.css('script[id="__NEXT_DATA__"]')
+            .get()
+            .replace('<script id="__NEXT_DATA__" type="application/json">', "")
+            .replace("</script>", "")
+        )
+        json_data = json.loads(data)
 
-        product_listings = response.json()["products"]
-        current_page = response.json()["pagination"]["currentPage"]
-        total_pages = response.json()["pagination"]["totalPages"]
-        cat = response.meta.get("category")
+        product_listings = json_data["props"]["initialState"]["search"]["products"]
+        total_pages = json_data["props"]["initialState"]["search"]["numOfPages"]
 
-        if current_page == 0:
-            for i in range(1, total_pages):
-                self.params["currentPage"] = i
-                next_url = (
-                    f"https://www.carrefourksa.com/api/v7/categories/{cat}?"
-                    + urlencode(self.params)
-                )
-                yield scrapy.Request(
-                    url=next_url,
-                    headers=self.headers,
-                    callback=self.parse_links,
-                )
-        for product_link in product_listings:
-            product_url = (
-                "https://www.carrefourksa.com/"
-                + product_link["links"]["productUrl"]["href"]
+        for i in range(1, 10):
+            next_url = (
+                "".join(unquote(response.url).split("?")[:2])
+                + f"?currentPage={i}&filter=&nextPageOffset=0&pageSize=60&sortBy=relevance"
             )
+            yield scrapy.Request(
+                url=get_scraperapi_url(next_url),
+                headers=self.headers,
+                callback=self.parse_links,
+            )
+        for product_link in product_listings:
+            product_url = "https://www.carrefourksa.com/" + product_link["url"]
+            print(product_url)
 
             yield scrapy.Request(
                 url=get_scraperapi_url(product_url),

@@ -78,6 +78,11 @@ data = (
         cat = response.meta.get("category")
         print(lang, cat)
 
+json_data['props']['initialState']['search']['products']
+json_data['props']['initialState']['search']['query']['currentPage']
+json_data['props']['initialProps']['pageProps']['query']['?currentPage']
+json_data['props']['initialState']['search']['numOfPages']
+
 #####
 NFKSA4000000 Electronics & Appliances
 NFKSA1200000 Smartphones, Tablets & Wearables
