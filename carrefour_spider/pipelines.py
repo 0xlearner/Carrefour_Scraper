@@ -26,7 +26,7 @@ def dedup_csv_header(fname, fname_new):
     print(f"dedup csv headers, file {fname} to {fname_new}")
     fnew = open(fname_new, "w")
 
-    with open(fname, "r") as f:
+    with open(fname, "r", encoding="utf8") as f:
         header = None
         first = True
         for line in f:

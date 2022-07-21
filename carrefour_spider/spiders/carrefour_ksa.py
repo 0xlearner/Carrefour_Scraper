@@ -46,14 +46,6 @@ class CarrefourKSA(scrapy.Spider):
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.143 YaBrowser/22.5.0.1879 (beta) Yowser/2.5 Safari/537.36",
     }
 
-    params = {
-        "currentPage": "0",
-        "filter": "",
-        "nextPageOffset": "0",
-        "pageSize": "60",
-        "sortBy": "relevance",
-    }
-
     def start_requests(self):
         categories = [
             "NFKSA4000000",
@@ -93,7 +85,7 @@ class CarrefourKSA(scrapy.Spider):
 
         for i in range(1, 10):
             next_url = (
-                "".join(unquote(response.url).split("?")[:2])
+                unquote(response.url).split('&')[1].replace('url=', '').split('?')[0]
                 + f"?currentPage={i}&filter=&nextPageOffset=0&pageSize=60&sortBy=relevance"
             )
             yield scrapy.Request(
