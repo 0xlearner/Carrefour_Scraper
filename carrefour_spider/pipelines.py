@@ -24,7 +24,7 @@ def dedup_csv_header(fname, fname_new):
         return
 
     print(f"dedup csv headers, file {fname} to {fname_new}")
-    fnew = open(fname_new, "w")
+    fnew = open(fname_new, "w", encoding="utf8")
 
     with open(fname, "r", encoding="utf8") as f:
         header = None
@@ -94,4 +94,10 @@ class CustomCarrefourCsvPipeline(object):
         sorted_df = drop_cols.sort_values(by=["catalog_uuid"])
         output_path = "%s-items-final.csv" % spider.name
         with open(output_path, "a") as f:
-            sorted_df.to_csv(output_path, mode="a", header=f.tell() == 0, index=False)
+            sorted_df.to_csv(
+                output_path,
+                mode="a",
+                encoding="utf-8",
+                header=f.tell() == 0,
+                index=False,
+            )
